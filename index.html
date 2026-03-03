@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Grok Imagine Pro - 完美交互版</title>
+  <title>Grok Imagine Pro - 锁分类版</title>
   <style>
     body { margin:0; padding:0; font-family: -apple-system, BlinkMacSystemFont, sans-serif; background:#111; color:#fff; height:100vh; display:flex; flex-direction:column; overflow:hidden; }
     header { background:#1a1a1a; padding:15px 20px; display:flex; align-items:center; justify-content:space-between; border-bottom:1px solid #333; }
@@ -17,26 +17,10 @@
     .cat-btn { background:#1f1f1f; color:#fff; padding:10px 18px; border-radius:999px; font-size:14px; border:none; white-space:nowrap; cursor:pointer; }
     .cat-btn.active { background:#a855f7; color:#000; font-weight:bold; }
     .grid { display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; margin-bottom:20px; }
-    
-    /* 重点优化：彻底禁用系统干扰 */
     .fragment-card { 
-      background:#1f1f1f; 
-      padding:12px 8px; 
-      border-radius:12px; 
-      text-align:center; 
-      font-size:13px; 
-      cursor:pointer; 
-      border: 1px solid transparent; 
-      display: flex; 
-      align-items: center; 
-      justify-content: center; 
-      min-height: 44px; 
-      overflow: hidden; 
-      word-break: break-all;
-      /* 禁用长按弹出系统菜单和选择文本 */
-      -webkit-touch-callout: none !important; 
-      -webkit-user-select: none !important; 
-      user-select: none !important;
+      background:#1f1f1f; padding:12px 8px; border-radius:12px; text-align:center; font-size:13px; cursor:pointer; border: 1px solid transparent; 
+      display: flex; align-items: center; justify-content: center; min-height: 44px; overflow: hidden; word-break: break-all;
+      -webkit-touch-callout: none !important; -webkit-user-select: none !important; user-select: none !important;
     }
     .fragment-card.selected { border-color: #a855f7; background: #2d1b4d; }
     .prompt-box { width:90%; margin:0 auto 20px auto; background:#1f1f1f; border:2px solid #3b82f6; border-radius:20px; padding:18px; }
@@ -59,7 +43,7 @@
       <span class="logo">📸</span>
       <div style="margin-left:8px">
         <div style="font-size:18px;font-weight:700;">Grok Imagine</div>
-        <div style="font-size:11px;color:#888;">防误触长按删除版</div>
+        <div style="font-size:11px;color:#888;">已新增“锁”分类</div>
       </div>
     </div>
   </header>
@@ -86,7 +70,7 @@
     <textarea id="bulkInput" placeholder="显示名 | 长词条..." style="min-height:80px; background:#1f1f1f; padding:10px; border-radius:12px;"></textarea>
     <button onclick="bulkAdd()" class="action-btn" style="background:#a855f7;color:#fff;">🚀 添加到该分类</button>
     
-    <button onclick="syncNewCategories()" class="action-btn" style="background:#f59e0b;color:#fff;">🔄 同步分类</button>
+    <button onclick="syncNewCategories()" class="action-btn" style="background:#f59e0b;color:#fff;">🔄 同步分类(显示新加的“锁”)</button>
 
     <h4 style="margin:20px 0 10px 0;">分类排序 (手指拖动)</h4>
     <div id="sort-container"></div>
@@ -106,8 +90,10 @@
   </div>
 
   <script>
+    // 默认初始数据，已添加“锁”分类
     const defaultFragments = {
       "人物": ["a beautiful elegant Asian girl"],
+      "锁": [], 
       "遮挡": ["face partially covered by hands"],
       "场景": [], "服饰": [], "动作": [], "照明": [], "质量": [], "负面提示词": ["blurry"]
     };
@@ -163,7 +149,6 @@
         card.className = `fragment-card ${isSelected ? 'selected' : ''}`;
         card.textContent = item.display;
         
-        // 绑定触摸事件，防止选择文字
         card.ontouchstart = (e) => {
           isLongPress = false;
           pressTimer = setTimeout(() => {
@@ -175,7 +160,6 @@
         card.ontouchend = (e) => {
           clearTimeout(pressTimer);
           if (!isLongPress) {
-            // 只有不是长按时才触发点击选择
             const idx = selected.indexOf(item.value);
             if(idx > -1) selected.splice(idx,1); else selected.push(item.value);
             renderAll();
@@ -183,8 +167,7 @@
           }
         };
 
-        card.ontouchmove = () => clearTimeout(pressTimer); // 手指移动则取消长按计时
-
+        card.ontouchmove = () => clearTimeout(pressTimer);
         grid.appendChild(card);
       });
     }
@@ -281,7 +264,7 @@
 
     function syncNewCategories() {
         Object.keys(defaultFragments).forEach(cat => { if (!(cat in fragments)) { fragments[cat] = []; categoryOrder.push(cat); } });
-        saveData(); renderAll(); updateCatSelect(); renderSortList(); alert("✅ 已同步");
+        saveData(); renderAll(); updateCatSelect(); renderSortList(); alert("✅ 已同步新分类（包含锁）");
     }
 
     function switchTab(n) {
@@ -314,4 +297,4 @@
     window.onload = initData;
   </script>
 </body>
-</html> 
+</html>
