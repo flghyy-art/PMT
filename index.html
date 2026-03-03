@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Grok Imagine Pro - 别名增强版</title>
+  <title>Grok Imagine Pro - 全功能版</title>
   <style>
     body { margin:0; padding:0; font-family: -apple-system, BlinkMacSystemFont, sans-serif; background:#111; color:#fff; height:100vh; display:flex; flex-direction:column; overflow:hidden; }
     header { background:#1a1a1a; padding:15px 20px; display:flex; align-items:center; justify-content:space-between; border-bottom:1px solid #333; }
@@ -17,7 +17,23 @@
     .cat-btn { background:#1f1f1f; color:#fff; padding:10px 18px; border-radius:999px; font-size:14px; border:none; white-space:nowrap; cursor:pointer; }
     .cat-btn.active { background:#a855f7; color:#000; font-weight:bold; }
     .grid { display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; margin-bottom:20px; }
-    .fragment-card { background:#1f1f1f; padding:12px 8px; border-radius:12px; text-align:center; font-size:13px; cursor:pointer; border: 1px solid transparent; display: flex; align-items: center; justify-content: center; min-height: 44px; overflow: hidden; word-break: break-all; }
+    .fragment-card { 
+      background:#1f1f1f; 
+      padding:12px 8px; 
+      border-radius:12px; 
+      text-align:center; 
+      font-size:13px; 
+      cursor:pointer; 
+      border: 1px solid transparent; 
+      display: flex; 
+      align-items: center; 
+      justify-content: center; 
+      min-height: 44px; 
+      overflow: hidden; 
+      word-break: break-all;
+      -webkit-touch-callout: none; /* 禁用系统默认长按菜单 */
+      user-select: none;
+    }
     .fragment-card.selected { border-color: #a855f7; background: #2d1b4d; }
     .prompt-box { width:90%; margin:0 auto 20px auto; background:#1f1f1f; border:2px solid #3b82f6; border-radius:20px; padding:18px; }
     textarea { width:100%; background:transparent; border:none; color:#fff; font-size:14px; line-height:1.4; min-height:100px; resize:none; }
@@ -31,7 +47,7 @@
     .backup-zone { margin-top: 20px; padding: 15px; background: #1a1a1a; border-radius: 16px; border: 1px dashed #444; }
     .action-btn { width:100%; padding:12px; border-radius:12px; margin-bottom:10px; font-weight:bold; border:none; cursor:pointer;}
     .alias-btn { background:#3b82f6; color:#fff; font-size:12px; padding:6px 12px; border-radius:8px; margin-bottom:5px; border:none; }
-    .help-text { font-size:12px; color:#888; margin-bottom:10px; }
+    .help-text { font-size:11px; color:#666; margin-top:5px; }
   </style>
 </head>
 <body>
@@ -40,7 +56,7 @@
       <span class="logo">📸</span>
       <div style="margin-left:8px">
         <div style="font-size:18px;font-weight:700;">Grok Imagine</div>
-        <div style="font-size:11px;color:#888;">支持显示名/长词转换</div>
+        <div style="font-size:11px;color:#888;">长按词条可永久删除</div>
       </div>
     </div>
   </header>
@@ -61,21 +77,20 @@
   <div id="page1" class="content" style="display:none;">
     <div style="display:flex; justify-content:space-between; align-items:flex-end;">
       <h4 style="margin:0;">批量录入</h4>
-      <button onclick="makeAlias()" class="alias-btn">✨ 别名转换助手</button>
+      <button onclick="makeAlias()" class="alias-btn">✨ 别名助手</button>
     </div>
-    <p class="help-text">格式：别名 | 长词条。点击上方助手可快速转换。</p>
-    <select id="catSelect" style="width:100%;padding:12px;background:#1f1f1f;color:#fff;border:none;border-radius:12px;margin-bottom:10px;"></select>
-    <textarea id="bulkInput" placeholder="直接粘贴长词或使用助手转换..." style="min-height:80px; background:#1f1f1f; padding:10px; border-radius:12px;"></textarea>
+    <select id="catSelect" style="width:100%;padding:12px;background:#1f1f1f;color:#fff;border:none;border-radius:12px;margin:10px 0;"></select>
+    <textarea id="bulkInput" placeholder="显示名 | 长词条..." style="min-height:80px; background:#1f1f1f; padding:10px; border-radius:12px;"></textarea>
     <button onclick="bulkAdd()" class="action-btn" style="background:#a855f7;color:#fff;">🚀 添加到该分类</button>
     
-    <button onclick="syncNewCategories()" class="action-btn" style="background:#f59e0b;color:#fff;">🔄 同步新分类结构</button>
+    <button onclick="syncNewCategories()" class="action-btn" style="background:#f59e0b;color:#fff;">🔄 同步缺失分类</button>
 
     <h4 style="margin:20px 0 10px 0;">分类排序 (手指拖动)</h4>
     <div id="sort-container"></div>
 
     <div class="backup-zone">
-      <button onclick="exportData()" class="action-btn" style="background:#3b82f6;color:#fff;">💾 导出当前备份</button>
-      <button onclick="document.getElementById('fileInput').click()" class="action-btn" style="background:#10b981;color:#fff;">📂 导入旧备份</button>
+      <button onclick="exportData()" class="action-btn" style="background:#3b82f6;color:#fff;">💾 导出备份</button>
+      <button onclick="document.getElementById('fileInput').click()" class="action-btn" style="background:#10b981;color:#fff;">📂 导入备份</button>
       <input type="file" id="fileInput" style="display:none" onchange="importData(event)" accept=".json">
     </div>
   </div>
@@ -83,30 +98,23 @@
   <div class="bottom-bar">
     <div class="btn-row">
       <button onclick="copyPrompt()" class="copy-btn">📋 复制提示词</button>
-      <button onclick="clearSelected()" class="clear-btn">🗑️ 重置选择</button>
+      <button onclick="clearSelected()" class="clear-btn">🗑️ 重置</button>
     </div>
   </div>
 
   <script>
     const defaultFragments = {
       "人物": ["a beautiful elegant Asian girl"],
-      "第二人物": ["a handsome man standing beside"],
-      "场景": ["in a cyberpunk city neon street"],
       "遮挡": ["face partially covered by hands"],
-      "临时A": [],
-      "临时B": [],
-      "服饰": ["flowing white dress"],
-      "动作": ["turning head gently"],
-      "照明": ["golden hour soft light"],
-      "镜头": ["85mm f/1.4 lens"],
-      "氛围": ["futuristic atmosphere"],
-      "质量": ["photorealistic"],
-      "负面提示词": ["blurry"]
+      "场景": ["in a cyberpunk city neon street"],
+      "临时A": [], "临时B": [], "服饰": [], "动作": [], "照明": [], "镜头": [], "氛围": [], "质量": [], "负面提示词": ["blurry"]
     };
 
     let fragments = {};
     let categoryOrder = [];
     let selected = [];
+    let currentCategory = "";
+    let pressTimer;
 
     function initData() {
       const saved = localStorage.getItem('grok_imagine_data');
@@ -125,27 +133,8 @@
       renderSortList();
     }
 
-    // 核心转换函数
-    function makeAlias() {
-      const input = document.getElementById('bulkInput');
-      const lines = input.value.trim().split('\n').filter(l=>l.trim());
-      if(lines.length === 0) { alert("请先在框内粘贴需要起名字的长提示词"); return; }
-      
-      let newLines = [];
-      for(let line of lines) {
-        if(line.includes('|')) { newLines.push(line); continue; } // 已有别名的跳过
-        const name = prompt(`为这段长词起个短名字：\n\n"${line.substring(0,50)}..."`, "自定义名称");
-        if(name) {
-          newLines.push(`${name} | ${line}`);
-        } else {
-          newLines.push(line);
-        }
-      }
-      input.value = newLines.join('\n');
-    }
-
     function parseFragment(raw) {
-      if (raw.includes('|')) {
+      if (typeof raw === 'string' && raw.includes('|')) {
         const parts = raw.split('|');
         return { display: parts[0].trim(), value: parts[1].trim() };
       }
@@ -165,27 +154,60 @@
 
       const grid = document.getElementById('fragments-grid');
       grid.innerHTML = '';
-      (fragments[currentCategory] || []).forEach(raw => {
+      (fragments[currentCategory] || []).forEach((raw, index) => {
         const item = parseFragment(raw);
         const isSelected = selected.includes(item.value);
         const card = document.createElement('div');
         card.className = `fragment-card ${isSelected ? 'selected' : ''}`;
         card.textContent = item.display;
+        
+        // 点击选择
         card.onclick = () => {
           const idx = selected.indexOf(item.value);
           if(idx > -1) selected.splice(idx,1); else selected.push(item.value);
           renderAll();
           updateOutput();
         };
+
+        // 长按删除逻辑
+        card.onmousedown = (e) => startPress(e, raw, index);
+        card.ontouchstart = (e) => startPress(e, raw, index);
+        card.onmouseup = clearPress;
+        card.onmouseleave = clearPress;
+        card.ontouchend = clearPress;
+
         grid.appendChild(card);
       });
     }
 
-    function syncNewCategories() {
-        Object.keys(defaultFragments).forEach(cat => {
-            if (!(cat in fragments)) { fragments[cat] = []; categoryOrder.push(cat); }
-        });
-        saveData(); renderAll(); updateCatSelect(); renderSortList(); alert("✅ 同步完成");
+    function startPress(e, raw, index) {
+      pressTimer = setTimeout(() => {
+        const item = parseFragment(raw);
+        if (confirm(`确定要永久删除词条「${item.display}」吗？`)) {
+          fragments[currentCategory].splice(index, 1);
+          // 如果该值已被选中，也从选中列表移除
+          const sIdx = selected.indexOf(item.value);
+          if(sIdx > -1) selected.splice(sIdx, 1);
+          saveData();
+          renderAll();
+          updateOutput();
+        }
+      }, 800); // 长按 0.8 秒触发
+    }
+
+    function clearPress() { clearTimeout(pressTimer); }
+
+    function makeAlias() {
+      const input = document.getElementById('bulkInput');
+      const lines = input.value.trim().split('\n').filter(l=>l.trim());
+      if(lines.length === 0) return;
+      let newLines = [];
+      for(let line of lines) {
+        if(line.includes('|')) { newLines.push(line); continue; }
+        const name = prompt(`为长词设置简短别名：\n"${line.substring(0,30)}..."`, "别名");
+        if(name) newLines.push(`${name} | ${line}`); else newLines.push(line);
+      }
+      input.value = newLines.join('\n');
     }
 
     function saveData() {
@@ -201,16 +223,16 @@
         item.className = 'sort-item';
         item.innerHTML = `<span>${cat}</span><span class="sort-handle">☰</span>`;
         item.dataset.index = index;
-        item.addEventListener('touchstart', handleTouchStart, {passive: false});
-        item.addEventListener('touchmove', handleTouchMove, {passive: false});
-        item.addEventListener('touchend', handleTouchEnd, {passive: false});
+        item.ontouchstart = handleSortStart;
+        item.ontouchmove = handleSortMove;
+        item.ontouchend = handleSortEnd;
         container.appendChild(item);
       });
     }
 
     let dragSrcIndex = null;
-    function handleTouchStart(e) { dragSrcIndex = this.dataset.index; this.style.opacity = '0.5'; }
-    function handleTouchMove(e) {
+    function handleSortStart(e) { dragSrcIndex = this.dataset.index; this.style.opacity = '0.5'; }
+    function handleSortMove(e) {
       e.preventDefault();
       const touch = e.touches[0];
       const target = document.elementFromPoint(touch.clientX, touch.clientY);
@@ -224,14 +246,14 @@
         renderSortList();
       }
     }
-    function handleTouchEnd() { this.style.opacity = '1'; saveData(); renderAll(); }
+    function handleSortEnd() { this.style.opacity = '1'; saveData(); renderAll(); }
 
     function updateOutput() {
       const mainItems = selected.filter(val => !fragments["负面提示词"].some(raw => parseFragment(raw).value === val));
       const negatives = selected.filter(val => fragments["负面提示词"].some(raw => parseFragment(raw).value === val));
-      let promptText = mainItems.join(', ');
-      if (negatives.length > 0) promptText += ` without ${negatives.join(', ')}`;
-      document.getElementById('output').value = promptText ? `A photorealistic portrait of ${promptText}` : "";
+      let prompt = mainItems.join(', ');
+      if (negatives.length > 0) prompt += ` without ${negatives.join(', ')}`;
+      document.getElementById('output').value = prompt ? `A photorealistic portrait of ${prompt}` : "";
     }
 
     function updateCatSelect() {
@@ -252,8 +274,12 @@
       fragments[cat] = [...new Set([...(fragments[cat] || []), ...lines])];
       saveData();
       input.value = '';
-      alert('✅ 已添加');
       renderAll();
+    }
+
+    function syncNewCategories() {
+        Object.keys(defaultFragments).forEach(cat => { if (!(cat in fragments)) { fragments[cat] = []; categoryOrder.push(cat); } });
+        saveData(); renderAll(); updateCatSelect(); renderSortList(); alert("✅ 同步完成");
     }
 
     function switchTab(n) {
@@ -269,23 +295,16 @@
     }
 
     function clearSelected() { selected = []; renderAll(); updateOutput(); }
-    
     function exportData() {
       const blob = new Blob([JSON.stringify(fragments)], {type: "application/json"});
-      const a = document.createElement('a');
-      a.href = URL.createObjectURL(blob);
-      a.download = 'grok_prompts_backup.json';
-      a.click();
+      const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'grok_prompts.json'; a.click();
     }
-
     function importData(e) {
       const reader = new FileReader();
       reader.onload = (ev) => {
         fragments = JSON.parse(ev.target.result);
-        Object.keys(defaultFragments).forEach(cat => { if (!(cat in fragments)) fragments[cat] = []; });
         categoryOrder = Object.keys(fragments);
-        saveData();
-        location.reload();
+        saveData(); location.reload();
       };
       reader.readAsText(e.target.files[0]);
     }
