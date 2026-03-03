@@ -3,11 +3,11 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Grok Imagine Pro</title>
+  <title>Grok Imagine Pro - 别名增强版</title>
   <style>
     body { margin:0; padding:0; font-family: -apple-system, BlinkMacSystemFont, sans-serif; background:#111; color:#fff; height:100vh; display:flex; flex-direction:column; overflow:hidden; }
     header { background:#1a1a1a; padding:15px 20px; display:flex; align-items:center; justify-content:space-between; border-bottom:1px solid #333; }
-    .logo { font-size:28px; }
+    .logo { font-size:24px; }
     .tab-bar { display:flex; background:#1a1a1a; border-bottom:1px solid #333; }
     .tab { flex:1; padding:16px; text-align:center; font-size:17px; font-weight:600; border-bottom:3px solid transparent; cursor:pointer; }
     .tab-active { border-bottom:3px solid #a855f7; color:#a855f7; }
@@ -16,20 +16,22 @@
     .category-row::-webkit-scrollbar { display: none; }
     .cat-btn { background:#1f1f1f; color:#fff; padding:10px 18px; border-radius:999px; font-size:14px; border:none; white-space:nowrap; cursor:pointer; }
     .cat-btn.active { background:#a855f7; color:#000; font-weight:bold; }
-    .grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:20px; }
-    .fragment-card { background:#1f1f1f; padding:18px 12px; border-radius:16px; text-align:center; font-size:15px; cursor:pointer; border: 1px solid transparent; }
+    .grid { display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; margin-bottom:20px; }
+    .fragment-card { background:#1f1f1f; padding:12px 8px; border-radius:12px; text-align:center; font-size:13px; cursor:pointer; border: 1px solid transparent; display: flex; align-items: center; justify-content: center; min-height: 44px; overflow: hidden; word-break: break-all; }
     .fragment-card.selected { border-color: #a855f7; background: #2d1b4d; }
     .prompt-box { width:90%; margin:0 auto 20px auto; background:#1f1f1f; border:2px solid #3b82f6; border-radius:20px; padding:18px; }
-    textarea { width:100%; background:transparent; border:none; color:#fff; font-size:16px; line-height:1.5; min-height:120px; resize:none; }
+    textarea { width:100%; background:transparent; border:none; color:#fff; font-size:14px; line-height:1.4; min-height:100px; resize:none; }
     .bottom-bar { background:#1a1a1a; border-top:1px solid #333; padding:15px; position:fixed; bottom:0; left:0; right:0; z-index:100; }
     .btn-row { display:flex; gap:10px; }
-    .btn-row button { flex:1; border-radius:999px; padding:18px; font-size:16px; font-weight:600; border:none; cursor:pointer; }
+    .btn-row button { flex:1; border-radius:999px; padding:16px; font-size:16px; font-weight:600; border:none; cursor:pointer; }
     .copy-btn { flex:2 !important; background:linear-gradient(90deg,#a855f7,#7c3aed); color:#fff; }
     .clear-btn { flex:1 !important; background:#333; color:#ff6b6b; }
     .sort-item { display:flex; align-items:center; justify-content:space-between; background:#1f1f1f; padding:15px; margin-bottom:8px; border-radius:12px; touch-action: none; }
     .sort-handle { color:#666; font-size:20px; }
     .backup-zone { margin-top: 20px; padding: 15px; background: #1a1a1a; border-radius: 16px; border: 1px dashed #444; }
     .action-btn { width:100%; padding:12px; border-radius:12px; margin-bottom:10px; font-weight:bold; border:none; cursor:pointer;}
+    .alias-btn { background:#3b82f6; color:#fff; font-size:12px; padding:6px 12px; border-radius:8px; margin-bottom:5px; border:none; }
+    .help-text { font-size:12px; color:#888; margin-bottom:10px; }
   </style>
 </head>
 <body>
@@ -38,7 +40,7 @@
       <span class="logo">📸</span>
       <div style="margin-left:8px">
         <div style="font-size:18px;font-weight:700;">Grok Imagine</div>
-        <div style="font-size:11px;color:#888;">已移除彻底重置按钮</div>
+        <div style="font-size:11px;color:#888;">支持显示名/长词转换</div>
       </div>
     </div>
   </header>
@@ -57,12 +59,16 @@
   </div>
 
   <div id="page1" class="content" style="display:none;">
-    <h4 style="margin:0 0 10px 0;">批量录入</h4>
+    <div style="display:flex; justify-content:space-between; align-items:flex-end;">
+      <h4 style="margin:0;">批量录入</h4>
+      <button onclick="makeAlias()" class="alias-btn">✨ 别名转换助手</button>
+    </div>
+    <p class="help-text">格式：别名 | 长词条。点击上方助手可快速转换。</p>
     <select id="catSelect" style="width:100%;padding:12px;background:#1f1f1f;color:#fff;border:none;border-radius:12px;margin-bottom:10px;"></select>
-    <textarea id="bulkInput" placeholder="每行一个词..." style="min-height:80px; background:#1f1f1f; padding:10px; border-radius:12px;"></textarea>
+    <textarea id="bulkInput" placeholder="直接粘贴长词或使用助手转换..." style="min-height:80px; background:#1f1f1f; padding:10px; border-radius:12px;"></textarea>
     <button onclick="bulkAdd()" class="action-btn" style="background:#a855f7;color:#fff;">🚀 添加到该分类</button>
     
-    <button onclick="syncNewCategories()" class="action-btn" style="background:#f59e0b;color:#fff;">🔄 同步并检查缺失分类</button>
+    <button onclick="syncNewCategories()" class="action-btn" style="background:#f59e0b;color:#fff;">🔄 同步新分类结构</button>
 
     <h4 style="margin:20px 0 10px 0;">分类排序 (手指拖动)</h4>
     <div id="sort-container"></div>
@@ -101,60 +107,55 @@
     let fragments = {};
     let categoryOrder = [];
     let selected = [];
-    let currentCategory = "人物";
 
     function initData() {
       const saved = localStorage.getItem('grok_imagine_data');
       const savedOrder = localStorage.getItem('grok_category_order');
-      
       if (saved) {
         fragments = JSON.parse(saved);
-        Object.keys(defaultFragments).forEach(cat => {
-            if (!(cat in fragments)) fragments[cat] = [];
-        });
+        Object.keys(defaultFragments).forEach(cat => { if (!(cat in fragments)) fragments[cat] = []; });
       } else {
         fragments = JSON.parse(JSON.stringify(defaultFragments));
       }
-
-      if (savedOrder) {
-        categoryOrder = JSON.parse(savedOrder);
-        Object.keys(fragments).forEach(cat => {
-          if(!categoryOrder.includes(cat)) categoryOrder.push(cat);
-        });
-      } else {
-        categoryOrder = Object.keys(fragments);
-      }
-      
+      categoryOrder = savedOrder ? JSON.parse(savedOrder) : Object.keys(fragments);
+      Object.keys(fragments).forEach(cat => { if(!categoryOrder.includes(cat)) categoryOrder.push(cat); });
       currentCategory = categoryOrder[0];
       renderAll();
       updateCatSelect();
       renderSortList();
     }
 
-    function syncNewCategories() {
-        Object.keys(defaultFragments).forEach(cat => {
-            if (!(cat in fragments)) {
-                fragments[cat] = [];
-                categoryOrder.push(cat);
-            }
-        });
-        saveData();
-        renderAll();
-        updateCatSelect();
-        renderSortList();
-        alert("✅ 已同步缺失分类，现有词条已保留");
+    // 核心转换函数
+    function makeAlias() {
+      const input = document.getElementById('bulkInput');
+      const lines = input.value.trim().split('\n').filter(l=>l.trim());
+      if(lines.length === 0) { alert("请先在框内粘贴需要起名字的长提示词"); return; }
+      
+      let newLines = [];
+      for(let line of lines) {
+        if(line.includes('|')) { newLines.push(line); continue; } // 已有别名的跳过
+        const name = prompt(`为这段长词起个短名字：\n\n"${line.substring(0,50)}..."`, "自定义名称");
+        if(name) {
+          newLines.push(`${name} | ${line}`);
+        } else {
+          newLines.push(line);
+        }
+      }
+      input.value = newLines.join('\n');
     }
 
-    function saveData() {
-      localStorage.setItem('grok_imagine_data', JSON.stringify(fragments));
-      localStorage.setItem('grok_category_order', JSON.stringify(categoryOrder));
+    function parseFragment(raw) {
+      if (raw.includes('|')) {
+        const parts = raw.split('|');
+        return { display: parts[0].trim(), value: parts[1].trim() };
+      }
+      return { display: raw, value: raw };
     }
 
     function renderAll() {
       const container = document.getElementById('category-row');
       container.innerHTML = '';
       categoryOrder.forEach(cat => {
-        if(!(cat in fragments)) return;
         const btn = document.createElement('button');
         btn.className = `cat-btn ${cat === currentCategory ? 'active' : ''}`;
         btn.textContent = cat;
@@ -164,19 +165,32 @@
 
       const grid = document.getElementById('fragments-grid');
       grid.innerHTML = '';
-      (fragments[currentCategory] || []).forEach(text => {
-        const isSelected = selected.includes(text);
+      (fragments[currentCategory] || []).forEach(raw => {
+        const item = parseFragment(raw);
+        const isSelected = selected.includes(item.value);
         const card = document.createElement('div');
         card.className = `fragment-card ${isSelected ? 'selected' : ''}`;
-        card.textContent = text;
+        card.textContent = item.display;
         card.onclick = () => {
-          const idx = selected.indexOf(text);
-          if(idx > -1) selected.splice(idx,1); else selected.push(text);
+          const idx = selected.indexOf(item.value);
+          if(idx > -1) selected.splice(idx,1); else selected.push(item.value);
           renderAll();
           updateOutput();
         };
         grid.appendChild(card);
       });
+    }
+
+    function syncNewCategories() {
+        Object.keys(defaultFragments).forEach(cat => {
+            if (!(cat in fragments)) { fragments[cat] = []; categoryOrder.push(cat); }
+        });
+        saveData(); renderAll(); updateCatSelect(); renderSortList(); alert("✅ 同步完成");
+    }
+
+    function saveData() {
+      localStorage.setItem('grok_imagine_data', JSON.stringify(fragments));
+      localStorage.setItem('grok_category_order', JSON.stringify(categoryOrder));
     }
 
     function renderSortList() {
@@ -213,8 +227,8 @@
     function handleTouchEnd() { this.style.opacity = '1'; saveData(); renderAll(); }
 
     function updateOutput() {
-      const mainItems = selected.filter(item => !fragments["负面提示词"].includes(item));
-      const negatives = selected.filter(item => fragments["负面提示词"].includes(item));
+      const mainItems = selected.filter(val => !fragments["负面提示词"].some(raw => parseFragment(raw).value === val));
+      const negatives = selected.filter(val => fragments["负面提示词"].some(raw => parseFragment(raw).value === val));
       let promptText = mainItems.join(', ');
       if (negatives.length > 0) promptText += ` without ${negatives.join(', ')}`;
       document.getElementById('output').value = promptText ? `A photorealistic portrait of ${promptText}` : "";
@@ -267,14 +281,10 @@
     function importData(e) {
       const reader = new FileReader();
       reader.onload = (ev) => {
-        const imported = JSON.parse(ev.target.result);
-        Object.keys(defaultFragments).forEach(cat => {
-            if (!(cat in imported)) imported[cat] = [];
-        });
-        fragments = imported;
+        fragments = JSON.parse(ev.target.result);
+        Object.keys(defaultFragments).forEach(cat => { if (!(cat in fragments)) fragments[cat] = []; });
         categoryOrder = Object.keys(fragments);
         saveData();
-        alert("✅ 载入完成");
         location.reload();
       };
       reader.readAsText(e.target.files[0]);
