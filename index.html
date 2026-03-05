@@ -3,9 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Grok Imagine Pro - 大容量数据库版</title>
+  <title>Grok Imagine Pro - 纯净大容量版</title>
   <style>
-    /* 样式部分保持不变，确保视觉稳定 */
     body { margin:0; padding:0; font-family: -apple-system, BlinkMacSystemFont, sans-serif; background:#111; color:#fff; height:100vh; display:flex; flex-direction:column; overflow:hidden; }
     header { background:#1a1a1a; padding:15px 20px; border-bottom:1px solid #333; }
     .tab-bar { display:flex; background:#1a1a1a; border-bottom:1px solid #333; }
@@ -29,11 +28,8 @@
     .btn-row { display:flex; gap:10px; }
     .btn-row button { flex:1; border-radius:999px; padding:16px; font-size:16px; font-weight:600; border:none; cursor:pointer; }
     .copy-btn { flex:2 !important; background:linear-gradient(90deg,#a855f7,#7c3aed); color:#fff; }
-    
-    /* 核心改动：管理页排序居中半宽 */
     #sort-container { display: flex; flex-direction: column; align-items: center; width: 100%; margin: 10px 0; }
     .sort-item { display:flex; align-items:center; justify-content:space-between; background:#1f1f1f; padding:12px 15px; margin-bottom:8px; border-radius:12px; touch-action: none; width: 50%; box-sizing: border-box; border: 1px solid #333; }
-    
     .upload-zone, .backup-zone { background:#1a1a1a; padding:15px; border-radius:16px; margin-bottom:20px; border: 1px solid #333; }
     .input-field { width:100%; padding:12px; background:#262626; color:#fff; border:none; border-radius:10px; margin-top:10px; box-sizing:border-box; }
     .file-input-label { display:block; padding:12px; background:#262626; border-radius:10px; text-align:center; margin-top:10px; color:#aaa; border: 1px dashed #444; cursor:pointer; }
@@ -41,19 +37,16 @@
   </style>
 </head>
 <body>
-  <header><div style="font-size:18px;font-weight:700;">📸 Grok Imagine <span style="font-size:10px;color:#888;">数据库版</span></div></header>
-
+  <header><div style="font-size:18px;font-weight:700;">📸 Grok Imagine <span style="font-size:10px;color:#888;">纯净数据库版</span></div></header>
   <div class="tab-bar">
     <div onclick="switchTab(0)" class="tab tab-active">生成器</div>
     <div onclick="switchTab(1)" class="tab">管理/上传</div>
   </div>
-
   <div id="page0" class="content">
     <div id="category-row" class="category-row"></div>
     <div id="fragments-grid" class="grid"></div>
     <div class="prompt-box"><textarea id="output" placeholder="点击标签组合..."></textarea></div>
   </div>
-
   <div id="page1" class="content" style="display:none;">
     <div class="upload-zone">
       <h4 style="margin:0;">📸 新增词条</h4>
@@ -64,10 +57,8 @@
       <input type="file" id="imgInput" style="display:none" onchange="previewImage()" accept="image/*">
       <button onclick="addEntry()" class="action-btn" style="background:#a855f7;">🚀 保存词条</button>
     </div>
-
     <h4 style="text-align:center; margin:10px 0; color:#888; font-size:14px;">↕️ 分类排序</h4>
     <div id="sort-container"></div>
-    
     <div class="backup-zone">
       <h4 style="margin:0 0 10px 0;">💾 词库备份</h4>
       <button onclick="exportData()" class="action-btn" style="background:#3b82f6;">📥 导出数据</button>
@@ -75,30 +66,18 @@
       <input type="file" id="importInput" style="display:none" onchange="importData(event)" accept=".json">
     </div>
   </div>
-
   <div class="bottom-bar"><div class="btn-row"><button onclick="copyPrompt()" class="copy-btn">📋 复制</button><button onclick="clearSelected()" style="background:#333;color:#ff6b6b;">🗑️ 重置</button></div></div>
 
   <script>
-    // --- IndexedDB 核心引擎 ---
     const DB_NAME = "GrokImagineDB";
     const STORE_NAME = "AppData";
-    let db;
-    let fragments = {};
-    let categoryOrder = [];
-    let selected = [];
-    let currentCategory = "";
+    let db, fragments = {}, categoryOrder = [], selected = [], currentCategory = "";
 
     function initDB() {
         return new Promise((resolve) => {
             const request = indexedDB.open(DB_NAME, 1);
-            request.onupgradeneeded = (e) => {
-                db = e.target.result;
-                db.createObjectStore(STORE_NAME);
-            };
-            request.onsuccess = (e) => {
-                db = e.target.result;
-                resolve();
-            };
+            request.onupgradeneeded = (e) => { db = e.target.result; db.createObjectStore(STORE_NAME); };
+            request.onsuccess = (e) => { db = e.target.result; resolve(); };
         });
     }
 
@@ -115,17 +94,12 @@
         });
     }
 
-    // --- 业务逻辑 ---
     async function initApp() {
         await initDB();
         const saved = await getFromDB("fragments");
         const savedOrder = await getFromDB("categoryOrder");
-        
-        if (saved) {
-            fragments = saved;
-        } else {
-            fragments = { "人物": [], "遮挡": [], "服饰": [], "动作": [], "照明": [] };
-        }
+        if (saved) fragments = saved;
+        else fragments = { "人物": [], "遮挡": [], "服饰": [], "动作": [], "照明": [] };
         categoryOrder = savedOrder || Object.keys(fragments);
         currentCategory = categoryOrder[0] || "人物";
         renderAll(); updateCatSelect(); renderSortList();
@@ -237,13 +211,12 @@
         const reader = new FileReader();
         reader.onload = async (ev) => {
             try {
-                const imported = JSON.parse(ev.target.result);
-                fragments = imported;
+                fragments = JSON.parse(ev.target.result);
                 categoryOrder = Object.keys(fragments);
                 await saveData();
                 alert("✅ 数据库导入成功！");
                 location.reload();
-            } catch(err) { alert("❌ 导入失败，请确保是有效的 JSON 文件"); }
+            } catch(err) { alert("❌ 导入失败"); }
         };
         reader.readAsText(file);
     }
@@ -253,7 +226,12 @@
         await saveToDB("categoryOrder", categoryOrder);
     }
 
-   
+    // --- 这里是修改核心：去掉了前后缀模板 ---
+    function updateOutput() {
+        const prompt = selected.join(', ');
+        document.getElementById('output').value = prompt; // 仅输出选中的标签，不带任何额外文字
+    }
+
     function updateCatSelect() {
         const select = document.getElementById('catSelect');
         select.innerHTML = '';
@@ -277,7 +255,6 @@
     }
 
     function clearSelected() { selected = []; renderAll(); updateOutput(); }
-
     window.onload = initApp;
   </script>
 </body>
