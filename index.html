@@ -253,11 +253,7 @@
         await saveToDB("categoryOrder", categoryOrder);
     }
 
-    function updateOutput() {
-        const prompt = selected.join(', ');
-        document.getElementById('output').value = prompt ? `A photorealistic portrait of ${prompt}, a stunning young woman` : "";
-    }
-
+   
     function updateCatSelect() {
         const select = document.getElementById('catSelect');
         select.innerHTML = '';
