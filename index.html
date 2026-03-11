@@ -1,40 +1,322 @@
-// 核心修复：确保异步保存完成后再操作 UI
-async function saveEdit() {
-    const item = fragments[currentCategory][editingIdx];
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Grok Imagine Pro - 强力数据修复版</title>
+  <style>
+    body { margin:0; padding:0; font-family: -apple-system, BlinkMacSystemFont, sans-serif; background:#111; color:#fff; height:100vh; display:flex; flex-direction:column; overflow:hidden; }
+    header { background:#1a1a1a; padding:15px 20px; border-bottom:1px solid #333; }
+    .tab-bar { display:flex; background:#1a1a1a; border-bottom:1px solid #333; }
+    .tab { flex:1; padding:16px; text-align:center; font-size:17px; font-weight:600; border-bottom:3px solid transparent; cursor:pointer; }
+    .tab-active { border-bottom:3px solid #a855f7; color:#a855f7; }
+    .content { flex:1; overflow-y:auto; padding:15px; background:#111; padding-bottom:320px; }
     
-    // 获取输入值
-    const newName = document.getElementById('editName').value.trim();
-    const newValue = document.getElementById('editValue').value.trim();
+    /* 生成器布局 */
+    .category-row { display:flex; overflow-x: auto; gap:8px; margin-bottom:15px; padding-bottom:10px; -webkit-overflow-scrolling: touch; }
+    .category-row::-webkit-scrollbar { display: none; }
+    .cat-btn { background:#1f1f1f; color:#fff; padding:10px 18px; border-radius:999px; font-size:14px; border:none; white-space:nowrap; cursor:pointer; }
+    .cat-btn.active { background:#a855f7; color:#000; font-weight:bold; }
+
+    .grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:20px; }
+    .fragment-card { background:#1f1f1f; min-height: 60px; border-radius:16px; position: relative; overflow: hidden; display: flex; align-items: center; justify-content: center; padding: 10px; background-size: cover; background-position: center; border: 2px solid transparent; -webkit-touch-callout: none; user-select: none; }
+    .fragment-card.has-img { height: 110px; align-items: flex-end; }
+    .fragment-card.selected { border-color: #a855f7; box-shadow: inset 0 0 0 2px #a855f7; }
+    .fragment-card .label { position: relative; z-index: 2; width: 100%; text-align: center; font-size: 13px; color: #fff; text-shadow: 0 1px 4px rgba(0,0,0,0.8); }
+    .has-img .label { background: rgba(0,0,0,0.6); padding: 6px 0; backdrop-filter: blur(4px); }
+
+    .prompt-box { width:90%; margin:0 auto 20px auto; background:#1f1f1f; border:2px solid #3b82f6; border-radius:20px; padding:18px; }
+    textarea { width:100%; background:transparent; border:none; color:#fff; font-size:15px; line-height:1.4; min-height:100px; resize:none; outline: none; }
     
-    if(!newName || !newValue) {
-        alert("名称和内容不能为空");
-        return;
+    .bottom-bar { background:#1a1a1a; border-top:1px solid #333; padding:15px; position:fixed; bottom:0; left:0; right:0; z-index:100; }
+    .btn-row { display:flex; gap:10px; }
+    .btn-row button { flex:1; border-radius:999px; padding:16px; font-size:16px; font-weight:600; border:none; cursor:pointer; }
+    .copy-btn { flex:2 !important; background:linear-gradient(90deg,#a855f7,#7c3aed); color:#fff; }
+
+    /* 管理页排序列表 */
+    #sort-container { display: flex; flex-direction: column; align-items: center; width: 100%; margin: 10px 0; }
+    .sort-item { display:flex; align-items:center; justify-content:space-between; background:#1f1f1f; padding:12px 15px; margin-bottom:8px; border-radius:12px; touch-action: none; width: 70%; box-sizing: border-box; border: 1px solid #333; }
+
+    .upload-zone { background:#1a1a1a; padding:15px; border-radius:16px; margin-bottom:20px; border: 1px solid #333; }
+    .input-field { width:100%; padding:12px; background:#262626; color:#fff; border:none; border-radius:10px; margin-top:10px; box-sizing:border-box; }
+    .file-input-label { display:block; padding:12px; background:#262626; border-radius:10px; text-align:center; margin-top:10px; color:#aaa; border: 1px dashed #444; cursor:pointer; }
+    .action-btn { width:100%; padding:14px; border-radius:12px; font-weight:bold; border:none; cursor:pointer; margin-top:10px; color:#fff; }
+
+    /* 彩蛋弹窗 */
+    .modal { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.9); z-index:1000; align-items:center; justify-content:center; padding:20px; }
+    .modal-content { background:#1a1a1a; width:100%; max-width:400px; border-radius:24px; padding:20px; border:1px solid #333; }
+  </style>
+</head>
+<body>
+  <header><div style="font-size:18px;font-weight:700;">📸 Grok Imagine <span style="font-size:10px;color:#888;">数据修复版</span></div></header>
+
+  <div class="tab-bar">
+    <div onclick="switchTab(0)" class="tab tab-active">生成器</div>
+    <div onclick="switchTab(1)" class="tab">管理/类目</div>
+  </div>
+
+  <div id="page0" class="content">
+    <div id="category-row" class="category-row"></div>
+    <div id="fragments-grid" class="grid"></div>
+    <div class="prompt-box"><textarea id="output" placeholder="点击标签组合..."></textarea></div>
+  </div>
+
+  <div id="page1" class="content" style="display:none;">
+    <div class="upload-zone">
+      <h4 style="margin:0;">📸 新增词条</h4>
+      <select id="catSelect" class="input-field"></select>
+      <input type="text" id="newName" class="input-field" placeholder="显示名称">
+      <textarea id="newValue" class="input-field" placeholder="提示词内容"></textarea>
+      <div class="file-input-label" onclick="document.getElementById('imgInput').click()" id="fileLabel">🖼️ 上传图片</div>
+      <input type="file" id="imgInput" style="display:none" onchange="previewImage('fileLabel', 'imgInput')" accept="image/*">
+      <button onclick="addEntry()" class="action-btn" style="background:#a855f7;">🚀 保存词条</button>
+    </div>
+
+    <div class="upload-zone">
+      <h4 style="margin:0;">✨ 类目管理</h4>
+      <input type="text" id="newCatName" class="input-field" placeholder="输入新类目名称">
+      <button onclick="createNewCategory()" class="action-btn" style="background:#3b82f6;">➕ 新建类目</button>
+    </div>
+
+    <div id="sort-container"></div>
+    
+    <div class="upload-zone" style="border-color:#ff6b6b; margin-top:20px;">
+      <h4 style="color:#ff6b6b; margin-top:0;">⚠️ 危险区域</h4>
+      <button onclick="if(confirm('警告：这会删除手机上所有词条！确认重置吗？')){ indexedDB.deleteDatabase(DB_NAME); location.reload(); }" class="action-btn" style="background:#666; font-size:12px;">彻底清空数据库并重启</button>
+    </div>
+  </div>
+
+  <div id="editModal" class="modal">
+    <div class="modal-content">
+      <h3 style="margin-top:0; color:#a855f7;">🥚 编辑词条</h3>
+      <input type="text" id="editName" class="input-field" placeholder="显示名称">
+      <textarea id="editValue" class="input-field" style="height:80px;" placeholder="提示词内容"></textarea>
+      <div class="file-input-label" onclick="document.getElementById('editImgInput').click()" id="editImgLabel">🖼️ 更换图片</div>
+      <input type="file" id="editImgInput" style="display:none" onchange="previewImage('editImgLabel', 'editImgInput')" accept="image/*">
+      <div style="display:flex; gap:10px; margin-top:15px;">
+        <button onclick="saveEdit()" class="action-btn" style="background:#a855f7; margin:0;">保存</button>
+        <button onclick="closeModal()" class="action-btn" style="background:#333; margin:0;">取消</button>
+      </div>
+      <button onclick="deleteEntry()" class="action-btn" style="background:transparent; color:#ff6b6b; border:1px solid #ff6b6b; margin-top:20px; font-size:12px;">🗑️ 删除此词条</button>
+    </div>
+  </div>
+
+  <div class="bottom-bar"><div class="btn-row"><button onclick="copyPrompt()" class="copy-btn">📋 复制</button><button onclick="clearSelected()" style="background:#333;color:#ff6b6b;">🗑️ 重置</button></div></div>
+
+  <script>
+    const DB_NAME = "GrokImagineDB";
+    const STORE_NAME = "AppData";
+    let db, fragments = {}, categoryOrder = [], selected = [], currentCategory = "";
+    let editingIdx = null;
+
+    function initDB() {
+      return new Promise((resolve) => {
+        const request = indexedDB.open(DB_NAME, 1);
+        request.onupgradeneeded = (e) => { 
+          db = e.target.result; 
+          if(!db.objectStoreNames.contains(STORE_NAME)) db.createObjectStore(STORE_NAME); 
+        };
+        request.onsuccess = (e) => { db = e.target.result; resolve(); };
+      });
     }
 
-    // 更新内存中的对象
-    item.name = newName;
-    item.value = newValue;
-    
-    const file = document.getElementById('editImgInput').files[0];
-    if(file) {
-        // 如果有新图片，等待转换完成
-        item.img = await new Promise((resolve) => {
-            const rd = new FileReader();
-            rd.readAsDataURL(file);
-            rd.onload = (e) => resolve(e.target.result);
-        });
+    async function saveToDB(key, val) {
+      const tx = db.transaction(STORE_NAME, "readwrite");
+      const store = tx.objectStore(STORE_NAME);
+      return new Promise((resolve) => {
+        const req = store.put(val, key);
+        req.onsuccess = () => resolve();
+      });
     }
-    
-    try {
-        // 关键点：使用 await 等待数据库写入操作彻底完成
-        await saveData(); 
+
+    function getFromDB(key) {
+      return new Promise((resolve) => {
+        const tx = db.transaction(STORE_NAME, "readonly");
+        const req = tx.objectStore(STORE_NAME).get(key);
+        req.onsuccess = () => resolve(req.result);
+      });
+    }
+
+    async function initApp() {
+      await initDB();
+      const saved = await getFromDB("fragments");
+      const savedOrder = await getFromDB("categoryOrder");
+      
+      fragments = saved || { "人物": [] };
+      
+      // 核心修复：数据格式自动纠错
+      Object.keys(fragments).forEach(cat => {
+        if (Array.isArray(fragments[cat])) {
+          fragments[cat] = fragments[cat].map(item => {
+            if (typeof item === 'string') return { name: item, value: item, img: "" };
+            if (!item || !item.name) return { name: "未命名", value: item ? item.value || "" : "", img: item ? item.img || "" : "" };
+            return item;
+          });
+        } else {
+          fragments[cat] = [];
+        }
+      });
+
+      categoryOrder = savedOrder || Object.keys(fragments);
+      currentCategory = categoryOrder[0] || "人物";
+      
+      renderAll();
+      updateCatSelect();
+      renderSortList();
+    }
+
+    function renderAll() {
+      const catRow = document.getElementById('category-row');
+      catRow.innerHTML = '';
+      categoryOrder.forEach(cat => {
+        const btn = document.createElement('button');
+        btn.className = `cat-btn ${cat === currentCategory ? 'active' : ''}`;
+        btn.textContent = cat;
+        btn.onclick = () => { currentCategory = cat; renderAll(); };
+        catRow.appendChild(btn);
+      });
+
+      const grid = document.getElementById('fragments-grid');
+      grid.innerHTML = '';
+      (fragments[currentCategory] || []).forEach((item, index) => {
+        const card = document.createElement('div');
+        card.className = `fragment-card ${selected.includes(item.value) ? 'selected' : ''} ${item.img ? 'has-img' : ''}`;
+        if(item.img) card.style.backgroundImage = `url(${item.img})`;
+        card.innerHTML = `<div class="label">${item.name}</div>`;
         
-        // 只有保存成功后才关闭弹窗并更新显示
-        closeModal();
-        renderAll();
-        alert("✅ 修改已永久保存");
-    } catch (err) {
-        console.error("保存失败:", err);
-        alert("❌ 数据库写入失败，请检查手机存储空间。");
+        let timer;
+        card.onclick = () => {
+          const idx = selected.indexOf(item.value);
+          if(idx > -1) selected.splice(idx,1); else selected.push(item.value);
+          renderAll(); updateOutput();
+        };
+        card.ontouchstart = () => timer = setTimeout(() => openEditModal(index), 800);
+        card.ontouchend = () => clearTimeout(timer);
+        grid.appendChild(card);
+      });
     }
-}
+
+    function openEditModal(index) {
+      editingIdx = index;
+      const item = fragments[currentCategory][index];
+      document.getElementById('editName').value = item.name;
+      document.getElementById('editValue').value = item.value;
+      document.getElementById('editModal').style.display = 'flex';
+    }
+
+    async function saveEdit() {
+      const item = fragments[currentCategory][editingIdx];
+      item.name = document.getElementById('editName').value;
+      item.value = document.getElementById('editValue').value;
+      const file = document.getElementById('editImgInput').files[0];
+      if(file) {
+        item.img = await new Promise(r => { const rd = new FileReader(); rd.readAsDataURL(file); rd.onload = e => r(e.target.result); });
+      }
+      await saveData(); 
+      closeModal();
+      renderAll();
+    }
+
+    async function deleteEntry() {
+      if(confirm("删除词条吗？")) {
+        fragments[currentCategory].splice(editingIdx, 1);
+        await saveData(); closeModal(); renderAll();
+      }
+    }
+
+    function closeModal() { document.getElementById('editModal').style.display = 'none'; editingIdx = null; }
+
+    function renderSortList() {
+      const container = document.getElementById('sort-container');
+      container.innerHTML = '';
+      categoryOrder.forEach((cat, index) => {
+        const item = document.createElement('div');
+        item.className = 'sort-item';
+        item.innerHTML = `<span onclick="renameCategory('${cat}')">${cat}</span><div><span style="color:#ff6b6b; margin-right:15px;" onclick="deleteCategory('${cat}')">🗑️</span><span>☰</span></div>`;
+        item.dataset.index = index;
+        item.ontouchstart = handleSortStart;
+        item.ontouchmove = handleSortMove;
+        item.ontouchend = handleSortEnd;
+        container.appendChild(item);
+      });
+    }
+
+    async function createNewCategory() {
+      const name = document.getElementById('newCatName').value.trim();
+      if(!name || fragments[name]) return alert("无效或已存在");
+      fragments[name] = [];
+      categoryOrder.push(name);
+      await saveData();
+      document.getElementById('newCatName').value = "";
+      renderAll(); updateCatSelect(); renderSortList();
+    }
+
+    function renameCategory(oldName) {
+      const newName = prompt("更名:", oldName);
+      if(!newName || fragments[newName]) return;
+      fragments[newName] = fragments[oldName]; delete fragments[oldName];
+      categoryOrder[categoryOrder.indexOf(oldName)] = newName;
+      if(currentCategory === oldName) currentCategory = newName;
+      saveData(); renderAll(); updateCatSelect(); renderSortList();
+    }
+
+    function deleteCategory(cat) {
+      if(confirm(`删除「${cat}」？`)) {
+        delete fragments[cat];
+        categoryOrder = categoryOrder.filter(c => c !== cat);
+        currentCategory = categoryOrder[0] || "";
+        saveData(); renderAll(); updateCatSelect(); renderSortList();
+      }
+    }
+
+    let dragSrcIndex = null;
+    function handleSortStart(e) { if(e.target.tagName === 'SPAN') return; dragSrcIndex = this.dataset.index; this.style.opacity = '0.5'; }
+    function handleSortMove(e) {
+      e.preventDefault();
+      const touch = e.touches[0];
+      const item = document.elementFromPoint(touch.clientX, touch.clientY)?.closest('.sort-item');
+      if (item && item.dataset.index !== dragSrcIndex) {
+        const targetIndex = item.dataset.index;
+        const temp = categoryOrder[dragSrcIndex];
+        categoryOrder.splice(dragSrcIndex, 1); categoryOrder.splice(targetIndex, 0, temp);
+        dragSrcIndex = targetIndex; renderSortList();
+      }
+    }
+    function handleSortEnd() { this.style.opacity = '1'; saveData(); renderAll(); }
+
+    function previewImage(labelId, inputId) {
+      const file = document.getElementById(inputId).files[0];
+      if(file) document.getElementById(labelId).innerText = `✅ 图片就绪`;
+    }
+
+    async function addEntry() {
+      const name = document.getElementById('newName').value.trim();
+      const val = document.getElementById('newValue').value.trim();
+      const file = document.getElementById('imgInput').files[0];
+      const cat = document.getElementById('catSelect').value;
+      if(!name || !val) return alert("必填");
+      let base64 = "";
+      if(file) base64 = await new Promise(r => { const rd = new FileReader(); rd.readAsDataURL(file); rd.onload = e => r(e.target.result); });
+      fragments[cat].push({ name, value: val, img: base64 });
+      await saveData(); renderAll();
+      document.getElementById('newName').value = ""; document.getElementById('newValue').value = "";
+      document.getElementById('fileLabel').innerText = "🖼️ 上传图片";
+    }
+
+    async function saveData() { await saveToDB("fragments", fragments); await saveToDB("categoryOrder", categoryOrder); }
+    function updateOutput() { document.getElementById('output').value = selected.join(', '); }
+    function updateCatSelect() {
+      const select = document.getElementById('catSelect'); select.innerHTML = '';
+      categoryOrder.forEach(c => { const opt = document.createElement('option'); opt.value = c; opt.textContent = c; select.appendChild(opt); });
+    }
+    function switchTab(n) {
+      document.getElementById('page0').style.display = n===0 ? 'block' : 'none';
+      document.getElementById('page1').style.display = n===1 ? 'block' : 'none';
+      document.querySelectorAll('.tab').forEach((t,i)=>t.classList.toggle('tab-active',i===n));
+    }
+    function copyPrompt() { const txt = document.getElementById('output'); txt.select(); navigator.clipboard.writeText(txt.value).then(()=>alert('✅ 已复制')); }
+    function clearSelected() { selected = []; renderAll(); updateOutput(); }
+    window.onload = initApp;
+  </script>
+</body>
+</html>
