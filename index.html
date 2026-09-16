@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
   <meta name="theme-color" content="#1a1a1a">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -119,10 +119,14 @@
       min-height: 0;
       overflow-x: hidden;
       overflow-y: auto;
-      padding: 14px max(14px, var(--safe-right)) 20px max(14px, var(--safe-left));
+      padding: 14px max(14px, var(--safe-right)) 24px max(14px, var(--safe-left));
       background: var(--bg);
       -webkit-overflow-scrolling: touch;
       overscroll-behavior: contain;
+    }
+
+    #page1.content {
+      padding-bottom: calc(28px + var(--safe-bottom));
     }
 
     .category-row {
@@ -160,7 +164,25 @@
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: 10px;
-      margin-bottom: 16px;
+      margin-bottom: 8px;
+    }
+
+    .grid:empty {
+      display: flex;
+      min-height: 88px;
+      margin-bottom: 8px;
+      align-items: center;
+      justify-content: center;
+      border: 1px dashed #333;
+      border-radius: var(--radius);
+      color: var(--muted);
+      font-size: 14px;
+      padding: 16px;
+      text-align: center;
+    }
+
+    .grid:empty::before {
+      content: "暂无词条，请到「管理/类目」添加";
     }
 
     .fragment-card {
@@ -228,13 +250,21 @@
       backdrop-filter: blur(4px);
     }
 
+    .composer {
+      flex-shrink: 0;
+      width: 100%;
+      padding: 8px max(14px, var(--safe-right)) 0 max(14px, var(--safe-left));
+      background: var(--bg);
+      border-top: 1px solid #222;
+    }
+
     .prompt-box {
       width: 100%;
-      margin: 0 auto 8px;
+      margin: 0;
       background: var(--card);
       border: 2px solid var(--blue);
       border-radius: 20px;
-      padding: 14px;
+      padding: 12px 14px;
     }
 
     textarea#output {
@@ -244,9 +274,11 @@
       color: #fff;
       font-size: 16px;
       line-height: 1.45;
-      min-height: 96px;
+      min-height: 72px;
+      max-height: 28vh;
       resize: none;
       outline: none;
+      overflow-y: auto;
     }
 
     .modal {
@@ -301,7 +333,8 @@
       z-index: 100;
     }
 
-    body[data-tab="1"] .bottom-bar { display: none; }
+    body[data-tab="1"] .bottom-bar,
+    body[data-tab="1"] .composer { display: none; }
 
     .btn-row { display: flex; gap: 10px; }
 
@@ -316,9 +349,19 @@
       cursor: pointer;
     }
 
-    .copy-btn { flex: 2 !important; background: linear-gradient(90deg, var(--accent), var(--accent-deep)); color: #fff; }
+    .copy-btn {
+      flex: 1 1 auto;
+      background: linear-gradient(90deg, var(--accent), var(--accent-deep));
+      color: #fff;
+    }
 
-    .reset-btn { background: #333; color: var(--danger); }
+    .reset-btn {
+      flex: 0 0 auto;
+      min-width: 104px;
+      white-space: nowrap;
+      background: #333;
+      color: var(--danger);
+    }
 
     .upload-zone, .backup-zone {
       background: var(--surface);
@@ -464,7 +507,7 @@
     @media (min-width: 640px) {
       .grid { grid-template-columns: repeat(3, 1fr); }
 
-      .content, .bottom-bar {
+      .content, .bottom-bar, .composer {
         max-width: 720px;
         margin-left: auto;
         margin-right: auto;
@@ -488,7 +531,6 @@
   <div id="page0" class="content">
     <div id="category-row" class="category-row"></div>
     <div id="fragments-grid" class="grid"></div>
-    <div class="prompt-box"><textarea id="output" placeholder="点击标签组合..."></textarea></div>
   </div>
 
   <div id="page1" class="content" style="display:none;">
@@ -533,6 +575,10 @@
       </div>
       <button onclick="deleteEntry()" class="action-btn" style="background:transparent; color:#ff6b6b; border:1px solid #ff6b6b; font-size:14px; margin-top:16px;">🗑️ 删除词条</button>
     </div>
+  </div>
+
+  <div class="composer">
+    <div class="prompt-box"><textarea id="output" placeholder="点击标签组合..."></textarea></div>
   </div>
 
   <div class="bottom-bar">
@@ -670,7 +716,7 @@
       categoryOrder.forEach((cat, index) => {
         const item = document.createElement('div');
         item.className = 'sort-item';
-        item.innerHTML = `<span class="sort-name" onclick="renameCategory('${cat}')">${cat}</span><div class="sort-actions"><span class="sort-delete" onclick="deleteCategory('${cat}')">🗑️</span><span class="sort-handle">☰</span></div>`;
+        item.innerHTML = `<span class="sort-name" onclick="renameCategory('${cat}')">${cat}</span><div class="sort-actions"><span class="sort-delete" onclick="deleteCategory('${cat}')">🗑️</span><div class="sort-handle" aria-hidden="true">☰</div></div>`;
         item.dataset.index = index;
         item.ontouchstart = handleSortStart;
         item.ontouchmove = handleSortMove;
