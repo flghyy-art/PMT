@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no, viewport-fit=cover, interactive-widget=resizes-content">
   <meta name="theme-color" content="#f3f5fa">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -38,9 +38,17 @@
     html, body {
       height: 100%;
       height: 100dvh;
+      width: 100%;
+      max-width: 100%;
     }
 
-    html { background: var(--bg); }
+    html {
+      background: var(--bg);
+      -webkit-text-size-adjust: 100%;
+      text-size-adjust: 100%;
+      overflow-x: hidden;
+      overscroll-behavior-x: none;
+    }
 
     body {
       margin: 0;
@@ -51,22 +59,40 @@
       display: flex;
       flex-direction: column;
       overflow: hidden;
+      overflow-x: hidden;
+      min-width: 0;
       color-scheme: light;
       -webkit-text-size-adjust: 100%;
       text-size-adjust: 100%;
+      overflow-wrap: anywhere;
     }
 
     body.modal-open { overflow: hidden; }
+
+    img, svg, video, canvas {
+      max-width: 100%;
+      height: auto;
+    }
 
     button, input, select, textarea {
       font: inherit;
       font-size: 16px;
       color: inherit;
+      max-width: 100%;
+    }
+
+    input, select, textarea {
+      min-width: 0;
     }
 
     button {
       touch-action: manipulation;
       -webkit-tap-highlight-color: transparent;
+    }
+
+    header, .tab-bar, .content, .composer, .bottom-bar {
+      min-width: 0;
+      max-width: 100%;
     }
 
     header {
@@ -84,6 +110,8 @@
       align-items: baseline;
       flex-wrap: wrap;
       gap: 6px 8px;
+      min-width: 0;
+      max-width: 100%;
     }
 
     .brand-sub {
@@ -102,6 +130,7 @@
 
     .tab {
       flex: 1;
+      min-width: 0;
       min-height: var(--tap);
       padding: 12px 8px;
       text-align: center;
@@ -115,6 +144,7 @@
       justify-content: center;
       -webkit-tap-highlight-color: transparent;
       user-select: none;
+      touch-action: manipulation;
     }
 
     .tab-active { border-bottom-color: var(--accent); color: var(--accent); }
@@ -122,6 +152,8 @@
     .content {
       flex: 1;
       min-height: 0;
+      min-width: 0;
+      width: 100%;
       overflow-x: hidden;
       overflow-y: auto;
       padding: 14px max(14px, var(--safe-right)) 24px max(14px, var(--safe-left));
@@ -138,8 +170,9 @@
       display: flex;
       overflow-x: auto;
       gap: 8px;
-      margin: -4px -4px 14px;
-      padding: 4px 4px 10px;
+      margin: -4px 0 14px;
+      padding: 4px 0 10px;
+      max-width: 100%;
       -webkit-overflow-scrolling: touch;
       overscroll-behavior-x: contain;
       position: sticky;
@@ -156,7 +189,7 @@
       min-height: var(--tap);
       padding: 10px 16px;
       border-radius: 999px;
-      font-size: 14px;
+      font-size: 16px;
       border: 1px solid var(--line);
       white-space: nowrap;
       cursor: pointer;
@@ -173,9 +206,11 @@
 
     .grid {
       display: grid;
-      grid-template-columns: 1fr 1fr;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
       gap: 10px;
       margin-bottom: 8px;
+      width: 100%;
+      max-width: 100%;
     }
 
     .grid:empty {
@@ -214,6 +249,9 @@
       user-select: none;
       cursor: pointer;
       -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
+      max-width: 100%;
+      min-width: 0;
     }
 
     .fragment-card:active { transform: scale(0.98); }
@@ -249,11 +287,13 @@
       position: relative;
       z-index: 2;
       width: 100%;
+      max-width: 100%;
       text-align: center;
-      font-size: 14px;
+      font-size: 16px;
       color: var(--text);
       text-shadow: none;
       word-break: break-word;
+      overflow-wrap: anywhere;
       padding: 0 4px;
     }
 
@@ -268,6 +308,7 @@
     .composer {
       flex-shrink: 0;
       width: 100%;
+      max-width: 100%;
       padding: 8px max(14px, var(--safe-right)) 0 max(14px, var(--safe-left));
       background: var(--surface);
       border-top: 1px solid var(--line);
@@ -275,6 +316,8 @@
 
     .prompt-box {
       width: 100%;
+      max-width: 100%;
+      min-width: 0;
       margin: 0;
       background: var(--card);
       border: 2px solid var(--accent);
@@ -318,11 +361,13 @@
       background: var(--surface);
       width: 100%;
       max-width: 100%;
+      min-width: 0;
       border-radius: 24px 24px 0 0;
-      padding: 12px 20px calc(20px + var(--safe-bottom));
+      padding: 12px max(16px, var(--safe-right)) calc(20px + var(--safe-bottom)) max(16px, var(--safe-left));
       border: 1px solid var(--line);
       border-bottom: none;
       max-height: min(92dvh, calc(100dvh - var(--safe-top) - 8px));
+      overflow-x: hidden;
       overflow-y: auto;
       -webkit-overflow-scrolling: touch;
     }
@@ -347,6 +392,8 @@
 
     .bottom-bar {
       flex-shrink: 0;
+      width: 100%;
+      max-width: 100%;
       background: var(--surface);
       border-top: 1px solid var(--line);
       padding: 10px max(16px, var(--safe-right)) calc(10px + var(--safe-bottom)) max(16px, var(--safe-left));
@@ -356,10 +403,16 @@
     body[data-tab="1"] .bottom-bar,
     body[data-tab="1"] .composer { display: none; }
 
-    .btn-row { display: flex; gap: 10px; }
+    .btn-row {
+      display: flex;
+      gap: 10px;
+      min-width: 0;
+      max-width: 100%;
+    }
 
     .btn-row button {
       flex: 1;
+      min-width: 0;
       border-radius: 999px;
       min-height: 50px;
       padding: 14px 12px;
@@ -376,8 +429,8 @@
     }
 
     .reset-btn {
-      flex: 0 0 auto;
-      min-width: 104px;
+      flex: 0 1 auto;
+      min-width: 0;
       white-space: nowrap;
       background: #fff5f4;
       color: var(--danger);
@@ -391,6 +444,8 @@
       margin-bottom: 16px;
       border: 1px solid var(--line);
       box-shadow: var(--shadow);
+      max-width: 100%;
+      min-width: 0;
     }
 
     .upload-zone h4, .backup-zone h4 { margin: 0; font-size: 16px; }
@@ -405,6 +460,8 @@
 
     .input-field {
       width: 100%;
+      max-width: 100%;
+      min-width: 0;
       min-height: var(--tap);
       padding: 12px 14px;
       background: var(--input);
@@ -412,6 +469,7 @@
       border: 1px solid var(--line);
       border-radius: 12px;
       margin-top: 10px;
+      font-size: 16px;
     }
 
     textarea.input-field {
@@ -477,6 +535,8 @@
       flex-direction: column;
       align-items: stretch;
       width: 100%;
+      max-width: 100%;
+      min-width: 0;
       margin: 4px 0 16px;
     }
 
@@ -491,6 +551,8 @@
       border-radius: 12px;
       touch-action: none;
       width: 100%;
+      max-width: 100%;
+      min-width: 0;
       border: 1px solid var(--line);
       min-height: var(--tap);
     }
@@ -542,8 +604,19 @@
       .modal-handle { display: none; }
     }
 
+    @media (max-width: 480px) {
+      html, body {
+        overflow-x: hidden;
+        max-width: 100%;
+      }
+
+      .upload-zone, .backup-zone, .prompt-box, .modal-content {
+        max-width: 100%;
+      }
+    }
+
     @media (min-width: 640px) {
-      .grid { grid-template-columns: repeat(3, 1fr); }
+      .grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 
       .content, .bottom-bar, .composer {
         max-width: 720px;
